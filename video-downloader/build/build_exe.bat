@@ -12,15 +12,15 @@ set "PROJECT_DIR=%BUILD_DIR%.."
 set "STAGING_DIR=%BUILD_DIR%staging"
 set "DOWNLOADS_DIR=%BUILD_DIR%downloads-win"
 
-set "PYTHON_VERSION=3.12.4"
+set "PYTHON_VERSION=3.12.3"
 set "PYTHON_TAG=20240415"
 set "YTDLP_VERSION=2024.08.06"
 
-set "PYTHON_URL=https://github.com/indygreg/python-build-standalone/releases/download/%PYTHON_TAG%/cpython-%PYTHON_VERSION%+%PYTHON_TAG%-x86_64-pc-windows-msvc-install_only_stripped.tar.gz"
+set "PYTHON_URL=https://github.com/astral-sh/python-build-standalone/releases/download/%PYTHON_TAG%/cpython-%PYTHON_VERSION%+%PYTHON_TAG%-x86_64-pc-windows-msvc-install_only.tar.gz"
 set "YTDLP_URL=https://github.com/yt-dlp/yt-dlp/releases/download/%YTDLP_VERSION%/yt-dlp.exe"
 set "FFMPEG_URL=https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip"
 
-set "PYTHON_ARCHIVE=cpython-%PYTHON_VERSION%+%PYTHON_TAG%-x86_64-pc-windows-msvc-install_only_stripped.tar.gz"
+set "PYTHON_ARCHIVE=cpython-%PYTHON_VERSION%+%PYTHON_TAG%-x86_64-pc-windows-msvc-install_only.tar.gz"
 set "FFMPEG_ARCHIVE=ffmpeg-master-latest-win64-gpl.zip"
 
 :: Clean staging
@@ -97,7 +97,7 @@ echo   ffmpeg OK.
 :: Copy app source
 echo [5/6] Copying app source...
 xcopy /E /Y /Q "%PROJECT_DIR%\app\*" "%STAGING_DIR%\app\" >nul
-copy /Y "%PROJECT_DIR%\userscript\universal_downloader.user.js" "%STAGING_DIR%\userscript.user.js" >nul
+copy /Y "%PROJECT_DIR%\app\templates\universal_downloader.user.js" "%STAGING_DIR%\userscript.user.js" >nul
 echo   App source OK.
 
 :: Check Inno Setup
