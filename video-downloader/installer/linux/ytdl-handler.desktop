@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=MediaSnag
+Comment=MediaSnag - ytdl:// URL handler
+Exec=__INSTALL_DIR__/bin/mediasnag %u
+Terminal=false
+NoDisplay=true
+MimeType=x-scheme-handler/ytdl;x-scheme-handler/ytdla;
+Categories=Network;
+Icon=mediasnag

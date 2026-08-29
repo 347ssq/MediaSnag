@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediaSnag</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>MediaSnag</h1>
+            <p class="subtitle">Universal Video/Audio Downloader</p>
+        </header>
+
+        <main>
+            <section class="input-section">
+                <div class="input-group">
+                    <input type="text" id="urlInput" placeholder="粘贴视频/音频链接..." autocomplete="off">
+                    <button id="analyzeBtn" class="btn btn-primary">分析</button>
+                </div>
+                <div class="type-toggle">
+                    <label class="toggle-option active" data-type="video">
+                        <input type="radio" name="dlType" value="video" checked>
+                        <span>视频</span>
+                    </label>
+                    <label class="toggle-option" data-type="audio">
+                        <input type="radio" name="dlType" value="audio">
+                        <span>音频</span>
+                    </label>
+                </div>
+            </section>
+
+            <section id="videoInfo" class="video-info hidden">
+                <div class="video-thumb">
+                    <img id="thumbnail" src="" alt="">
+                </div>
+                <div class="video-details">
+                    <h2 id="videoTitle"></h2>
+                    <p id="videoDuration" class="duration"></p>
+                </div>
+            </section>
+
+            <section id="qualitySection" class="quality-section hidden">
+                <h3>选择清晰度</h3>
+                <div id="qualityList" class="quality-list"></div>
+
+                <div id="audioOptions" class="audio-options hidden">
+                    <label class="radio-option">
+                        <input type="radio" name="audioFormat" value="mp3_best" checked>
+                        <span>MP3 最佳音质</span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="audioFormat" value="mp3_128k">
+                        <span>MP3 128kbps</span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="audioFormat" value="m4a">
+                        <span>M4A 最佳音质</span>
+                    </label>
+                </div>
+
+                <button id="downloadBtn" class="btn btn-download">开始下载</button>
+            </section>
+
+            <section id="progressSection" class="progress-section hidden">
+                <div class="progress-header">
+                    <span id="progressFilename">准备中...</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill"></div>
+                </div>
+                <div class="progress-details">
+                    <span id="progressSpeed">速度: --</span>
+                    <span id="progressEta">剩余: --</span>
+                </div>
+                <div id="progressStatus" class="progress-status"></div>
+            </section>
+
+            <section id="historySection" class="history-section">
+                <h3>下载历史</h3>
+                <div id="historyList" class="history-list">
+                    <p class="empty">暂无下载记录</p>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>MediaSnag v1.0 | <a href="/userscript.user.js">Install Tampermonkey Script</a></p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
