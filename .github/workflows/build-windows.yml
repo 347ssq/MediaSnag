@@ -46,6 +46,11 @@ jobs:
           mkdir -p staging/app
           cp -r video-downloader/app/* staging/app/
           cp video-downloader/app/templates/universal_downloader.user.js staging/userscript.user.js
+          for f in staging/userscript.user.js staging/app/static/index.html staging/app/static/app.js staging/app/static/style.css staging/app/server.py staging/app/__main__.py staging/app/launcher.pyw; do
+            if [ ! -f "$f" ]; then echo "MISSING: $f"; exit 1; fi
+          done
+          echo "--- staging contents (app) ---"
+          find staging/app -maxdepth 2 -not -path '*/__pycache__*' | sort
 
       - name: Install Inno Setup
         shell: pwsh
