@@ -29,7 +29,7 @@ def get_install_dir():
     if get_platform() == "macos":
         return Path.home() / "Library" / "ytdlp"
     elif get_platform() == "windows":
-        return Path(os.environ.get("LOCALAPPDATA", Path.home())) / "ytdlp"
+        return Path(os.environ.get("LOCALAPPDATA", Path.home())) / "MediaSnag"
     else:
         return Path.home() / ".local" / "share" / "ytdlp"
 
@@ -70,6 +70,8 @@ def get_data_dir():
 
 def get_userscript_path():
     """Return path to the bundled userscript."""
+    if get_platform() == "windows":
+        return get_install_dir() / "userscript.user.js"
     return get_install_dir() / "app" / "templates" / "universal_downloader.user.js"
 
 

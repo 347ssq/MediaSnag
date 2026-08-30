@@ -55,6 +55,16 @@ def start_server_and_open_browser(url=None):
 
     webbrowser.open(page)
 
+    first_run_marker = os.path.join(os.path.dirname(static_dir), "first_run")
+    if os.path.exists(first_run_marker):
+        import time
+        time.sleep(1)
+        webbrowser.open(f"http://127.0.0.1:{port}/userscript.user.js")
+        try:
+            os.remove(first_run_marker)
+        except OSError:
+            pass
+
     print(f"MediaSnag running on {page}")
     print("Press Ctrl+C to stop.")
 

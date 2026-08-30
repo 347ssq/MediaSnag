@@ -46,6 +46,12 @@ Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\python\pythonw.exe"; Parameters: """{app}\app\launcher.pyw"""; WorkingDir: "{app}"; Tasks: desktopicon; IconFilename: "{app}\python\python.exe"
 
 [Run]
+; Open Tampermonkey extension page for Edge/Chrome
+Filename: "https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepnlendamhhebd"; Description: "安装 Tampermonkey (Edge)"; Flags: shellexec skipifsilent unchecked
+Filename: "https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojomgjnfblddpfdgp"; Description: "安装 Tampermonkey (Chrome)"; Flags: shellexec skipifsilent unchecked
+; Create first-run marker so app opens userscript install page
+Filename: "cmd.exe"; Parameters: "/c echo 1 > ""{app}\first_run"""; Flags: runhidden skipifsilent
+; Launch MediaSnag
 Filename: "{app}\python\pythonw.exe"; Parameters: """{app}\app\launcher.pyw"""; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [Registry]
