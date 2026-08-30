@@ -44,8 +44,8 @@ jobs:
         shell: bash
         run: |
           mkdir -p staging/app
-          cp -r app/* staging/app/
-          cp app/templates/universal_downloader.user.js staging/userscript.user.js
+          cp -r video-downloader/app/* staging/app/
+          cp video-downloader/app/templates/universal_downloader.user.js staging/userscript.user.js
 
       - name: Install Inno Setup
         shell: pwsh
@@ -54,14 +54,13 @@ jobs:
 
       - name: Build installer
         shell: bash
-        working-directory: video-downloader
         run: |
-          mkdir -p build/staging
-          cp -r staging/python build/staging/python
-          cp -r staging/bin build/staging/bin
-          cp -r staging/app build/staging/app
-          cp staging/userscript.user.js build/staging/userscript.user.js
-          "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" build/mediasnag.iss
+          mkdir -p video-downloader/build/staging
+          cp -r staging/python video-downloader/build/staging/python
+          cp -r staging/bin video-downloader/build/staging/bin
+          cp -r staging/app video-downloader/build/staging/app
+          cp staging/userscript.user.js video-downloader/build/staging/userscript.user.js
+          "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" video-downloader/build/mediasnag.iss
 
       - name: Upload installer
         uses: actions/upload-artifact@v4
