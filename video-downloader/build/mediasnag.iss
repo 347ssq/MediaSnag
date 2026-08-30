@@ -47,8 +47,10 @@ Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\python\pythonw.exe"; Parameters: """{app}\app\launcher.pyw"""; WorkingDir: "{app}"; Tasks: desktopicon; IconFilename: "{app}\python\python.exe"
 
 [Run]
-; Install Tampermonkey from bundled CRX (offline, no store needed)
-Filename: "{app}\tampermonkey.crx"; Description: "安装 Tampermonkey (离线)"; Flags: shellexec skipifsilent unchecked
+; Install Tampermonkey - Edge Add-ons store (works in China)
+Filename: "https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepnlendamhhebd"; Description: "安装 Tampermonkey (Edge 商店)"; Flags: shellexec skipifsilent unchecked
+; Backup: Install from bundled CRX (offline)
+Filename: "{app}\tampermonkey.crx"; Description: "安装 Tampermonkey (离线备用)"; Flags: shellexec skipifsilent unchecked
 ; Create first-run marker so app opens userscript install page
 Filename: "cmd.exe"; Parameters: "/c echo 1 > ""{app}\first_run"""; Flags: runhidden skipifsilent
 ; Launch MediaSnag
