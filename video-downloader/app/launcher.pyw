@@ -9,10 +9,30 @@ Invoked by:
 import os
 import sys
 
+# Get the directory containing this script (app directory)
 app_dir = os.path.dirname(os.path.abspath(__file__))
-if app_dir not in sys.path:
-    sys.path.insert(0, os.path.dirname(app_dir))
+# Get the parent directory (install root)
+install_root = os.path.dirname(app_dir)
 
-from app.__main__ import main
+# Add both directories to sys.path for imports to work
+for path in [install_root, app_dir]:
+    if path not in sys.path:
+        sys.path.insert(0, path)
 
-main()
+try:
+    from app.__main__ import main
+    main()
+except Exception as e:
+    # If running without console, write error to a log file
+    error_log = os.path.join(install_root, "error.log")
+    with open(error_log, "w", encoding="utf-8") as f:
+        import traceback
+        f.write(f"Error: {e}\n\n")
+        f.write(traceback.format_exc())
+    # Try to show a message box
+    try:
+        import ctypes
+        ctypes.windll.user32.MessageBoxW(0, str(e), "MediaSnag Error", 0x10)
+    except:
+        pass
+    sys.exit(1)
