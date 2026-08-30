@@ -87,10 +87,17 @@
         </main>
 
         <footer>
-            <p>MediaSnag v1.0 | <a href="/userscript.user.js">Install Tampermonkey Script</a></p>
+            <p>MediaSnag <span id="appVersion">…</span> | <a href="/userscript.user.js">Install Tampermonkey Script</a></p>
         </footer>
     </div>
 
     <script src="app.js"></script>
+    <script>
+        fetch('/health').then(function (r) { return r.json(); }).then(function (d) {
+            if (d && d.version) {
+                document.getElementById('appVersion').textContent = 'v' + d.version;
+            }
+        }).catch(function () {});
+    </script>
 </body>
 </html>

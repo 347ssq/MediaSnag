@@ -45,11 +45,12 @@ class DownloadHandler(SimpleHTTPRequestHandler):
     def _send_404(self):
         body = (
             "MediaSnag: 404 页面不存在\n"
-            f"请求的路径: {self.path}\n\n"
+            f"请求的路径: {self.path}\n"
+            f"服务器版本: {config.APP_VERSION}\n\n"
             "可用地址:\n"
             "  /                    主界面\n"
             "  /userscript.user.js  油猴脚本（安装/更新）\n"
-            "  /health              状态检查\n"
+            "  /health              状态检查（含版本号）\n"
         ).encode("utf-8")
         self.send_response(404)
         self.send_header("Content-Type", "text/plain; charset=utf-8")
@@ -79,7 +80,7 @@ class DownloadHandler(SimpleHTTPRequestHandler):
         elif path == "/userscript.user.js":
             self._serve_userscript()
         elif path == "/health":
-            self._send_json({"status": "ok"})
+            self._send_json({"status": "ok", "version": config.APP_VERSION})
         else:
             self._send_404()
 

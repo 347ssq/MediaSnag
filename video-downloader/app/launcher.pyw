@@ -21,6 +21,15 @@ if sys.stdout is None:
 if sys.stderr is None:
     sys.stderr = open(os.devnull, "w", encoding="utf-8")
 
+# Named mutex so the installer can detect running instances and close
+# them before replacing files (AppMutex=MediaSnagAppMutex in mediasnag.iss).
+if sys.platform == "win32":
+    try:
+        import ctypes
+        ctypes.windll.kernel32.CreateMutexW(None, False, "MediaSnagAppMutex")
+    except Exception:
+        pass
+
 # Add both directories to sys.path for imports to work
 for path in [install_root, app_dir]:
     if path not in sys.path:

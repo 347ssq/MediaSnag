@@ -2,7 +2,7 @@
 ; Compile with: ISCC.exe mediasnag.iss
 
 #define MyAppName "MediaSnag"
-#define MyAppVersion "1.0.2"
+#define MyAppVersion "1.0.3"
 #define MyAppPublisher "MediaSnag"
 #define MyAppExeName "MediaSnag.exe"
 
@@ -22,6 +22,7 @@ WizardStyle=modern
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64bitMode=x64compatible
+AppMutex=MediaSnagAppMutex
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -64,3 +65,25 @@ Root: HKCU; Subkey: "Software\Classes\ytdla"; ValueType: "string"; ValueData: "U
 Root: HKCU; Subkey: "Software\Classes\ytdla"; ValueType: "string"; ValueName: "URL Protocol"; ValueData: ""; Flags: uninsdeletekey
 Root: HKCU; Subkey: "Software\Classes\ytdla\DefaultIcon"; ValueType: "string"; ValueData: "{app}\python\python.exe,0"; Flags: uninsdeletekey
 Root: HKCU; Subkey: "Software\Classes\ytdla\shell\open\command"; ValueType: "string"; ValueData: """{app}\python\pythonw.exe"" ""{app}\app\launcher.pyw"" ""%1"""; Flags: uninsdeletekey
+
+[Code]
+// Terminate a running MediaSnag server before files are replaced, so an
+// upgrade never leaves a stale instance serving old code on the port.
+// The app writes its PID to {app}\data\mediasnag.pid at startup.
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  ResultCode: Integer;
+  PidFile: String;
+  Pid: AnsiString;
+begin
+  if CurStep = ssInstall then
+  begin
+    PidFile := ExpandConstant('{localappdata}\MediaSnag\data\mediasnag.pid');
+    if LoadStringFromFile(PidFile, Pid) then
+    begin
+      if Length(Pid) > 0 then
+        Exec('taskkill.exe', '/f /pid ' + Pid, '', SW_HIDE,
+          ewWaitUntilTerminated, ResultCode);
+    end;
+  end;
+end;

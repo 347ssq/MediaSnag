@@ -39,14 +39,50 @@ def has_serve_flag():
     return "--serve" in sys.argv[1:]
 
 
+def find_running_server():
+    """Return the port of an already-running MediaSnag server, or None."""
+    import urllib.request
+
+    for port in range(config.SERVER_PORT, config.SERVER_PORT_MAX + 1):
+        try:
+            with urllib.request.urlopen(
+                f"http://127.0.0.1:{port}/health", timeout=0.3
+            ) as resp:
+                if resp.status == 200:
+                    return port
+        except Exception:
+            continue
+    return None
+
+
 def start_server_and_open_browser(url=None):
-    """Start the HTTP server and open the browser."""
+    """Start the HTTP server and open the browser.
+
+    If a MediaSnag server is already running, reuse it instead of
+    starting a second instance (which would grab another port and
+    leave stale processes behind).
+    """
     from .server import start_server
 
-    static_dir = os.path.join(os.path.dirname(__file__), "static")
-    userscript_path = config.get_userscript_path()
+    server = None
+    existing_port = find_running_server()
+    if existing_port:
+        port = existing_port
+    else:
+        static_dir = os.path.join(os.path.dirname(__file__), "static")
+        userscript_path = config.get_userscript_path()
 
-    server, port = start_server(static_dir, userscript_path)
+        server, port = start_server(static_dir, userscript_path)
+
+        # Record PID so the installer can terminate this instance
+        # before replacing files on upgrade.
+        try:
+            data_dir = config.get_data_dir()
+            os.makedirs(data_dir, exist_ok=True)
+            with open(os.path.join(data_dir, "mediasnag.pid"), "w") as f:
+                f.write(str(os.getpid()))
+        except OSError:
+            pass
 
     if url:
         page = f"http://127.0.0.1:{port}/?url={urllib.parse.quote(url, safe='')}"
@@ -67,7 +103,11 @@ def start_server_and_open_browser(url=None):
         except OSError:
             pass
 
-    print(f"MediaSnag running on {page}")
+    if server is None:
+        # Reused an existing server; this process has nothing to serve.
+        return
+
+    print(f"MediaSnag {config.APP_VERSION} running on {page}")
     print("Press Ctrl+C to stop.")
 
     try:
