@@ -14,6 +14,13 @@ app_dir = os.path.dirname(os.path.abspath(__file__))
 # Get the parent directory (install root)
 install_root = os.path.dirname(app_dir)
 
+# pythonw.exe has no console: sys.stdout/stderr are None, and any print()
+# would crash the app and kill the download server right after startup.
+if sys.stdout is None:
+    sys.stdout = open(os.devnull, "w", encoding="utf-8")
+if sys.stderr is None:
+    sys.stderr = open(os.devnull, "w", encoding="utf-8")
+
 # Add both directories to sys.path for imports to work
 for path in [install_root, app_dir]:
     if path not in sys.path:

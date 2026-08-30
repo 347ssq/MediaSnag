@@ -2,7 +2,7 @@
 ; Compile with: ISCC.exe mediasnag.iss
 
 #define MyAppName "MediaSnag"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.0.2"
 #define MyAppPublisher "MediaSnag"
 #define MyAppExeName "MediaSnag.exe"
 

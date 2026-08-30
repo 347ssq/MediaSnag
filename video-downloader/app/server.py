@@ -40,7 +40,22 @@ class DownloadHandler(SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(content)
         except FileNotFoundError:
-            self.send_error(404)
+            self._send_404()
+
+    def _send_404(self):
+        body = (
+            "MediaSnag: 404 页面不存在\n"
+            f"请求的路径: {self.path}\n\n"
+            "可用地址:\n"
+            "  /                    主界面\n"
+            "  /userscript.user.js  油猴脚本（安装/更新）\n"
+            "  /health              状态检查\n"
+        ).encode("utf-8")
+        self.send_response(404)
+        self.send_header("Content-Type", "text/plain; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
     def do_GET(self):
         parsed = urlparse(self.path)
@@ -66,7 +81,7 @@ class DownloadHandler(SimpleHTTPRequestHandler):
         elif path == "/health":
             self._send_json({"status": "ok"})
         else:
-            self.send_error(404)
+            self._send_404()
 
     def do_POST(self):
         parsed = urlparse(self.path)
@@ -85,7 +100,7 @@ class DownloadHandler(SimpleHTTPRequestHandler):
             path = os.path.join(self.static_dir, filename)
             self._send_file(path, content_type)
         else:
-            self.send_error(404)
+            self._send_404()
 
     def _serve_userscript(self):
         if self.userscript_path and os.path.exists(self.userscript_path):
@@ -94,7 +109,7 @@ class DownloadHandler(SimpleHTTPRequestHandler):
                 "text/javascript; charset=utf-8"
             )
         else:
-            self.send_error(404)
+            self._send_404()
 
     def _handle_formats(self, params):
         url = params.get("url", [None])[0]
