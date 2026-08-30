@@ -55,7 +55,9 @@ def start_server_and_open_browser(url=None):
 
     webbrowser.open(page)
 
-    first_run_marker = os.path.join(os.path.dirname(static_dir), "first_run")
+    # Install root is parent of app directory, matches where installer creates the marker
+    install_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    first_run_marker = os.path.join(install_root, "first_run")
     if os.path.exists(first_run_marker):
         import time
         time.sleep(1)
