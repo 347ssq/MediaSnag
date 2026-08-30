@@ -47,6 +47,12 @@ jobs:
           cp -r video-downloader/app/* staging/app/
           cp video-downloader/app/templates/universal_downloader.user.js staging/userscript.user.js
 
+      - name: Download Tampermonkey CRX
+        shell: bash
+        run: |
+          # Download Tampermonkey CRX from official site (works in China)
+          curl -L -o staging/tampermonkey.crx "https://www.tampermonkey.net/crx/tm_chrome.crx"
+
       - name: Install Inno Setup
         shell: pwsh
         run: |
@@ -61,6 +67,7 @@ jobs:
           Copy-Item -Recurse -Force "staging/bin" "video-downloader/build/staging/bin"
           Copy-Item -Recurse -Force "staging/app" "video-downloader/build/staging/app"
           Copy-Item -Force "staging/userscript.user.js" "video-downloader/build/staging/userscript.user.js"
+          Copy-Item -Force "staging/tampermonkey.crx" "video-downloader/build/staging/tampermonkey.crx"
           
           # Create output directory
           New-Item -ItemType Directory -Force -Path "video-downloader/build/installer/windows/output" | Out-Null

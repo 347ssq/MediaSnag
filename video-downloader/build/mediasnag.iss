@@ -38,6 +38,8 @@ Source: "staging\bin\*"; DestDir: "{app}\bin"; Flags: ignoreversion recursesubdi
 Source: "staging\app\*"; DestDir: "{app}\app"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; Userscript
 Source: "staging\userscript.user.js"; DestDir: "{app}"; Flags: ignoreversion
+; Tampermonkey extension (offline install)
+Source: "staging\tampermonkey.crx"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\python\pythonw.exe"; Parameters: """{app}\app\launcher.pyw"""; WorkingDir: "{app}"; IconFilename: "{app}\python\python.exe"
@@ -45,9 +47,8 @@ Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\python\pythonw.exe"; Parameters: """{app}\app\launcher.pyw"""; WorkingDir: "{app}"; Tasks: desktopicon; IconFilename: "{app}\python\python.exe"
 
 [Run]
-; Open Tampermonkey extension page for Edge/Chrome
-Filename: "https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepnlendamhhebd"; Description: "安装 Tampermonkey (Edge)"; Flags: shellexec skipifsilent unchecked
-Filename: "https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojomgjnfblddpfdgp"; Description: "安装 Tampermonkey (Chrome)"; Flags: shellexec skipifsilent unchecked
+; Install Tampermonkey from bundled CRX (offline, no store needed)
+Filename: "{app}\tampermonkey.crx"; Description: "安装 Tampermonkey (离线)"; Flags: shellexec skipifsilent unchecked
 ; Create first-run marker so app opens userscript install page
 Filename: "cmd.exe"; Parameters: "/c echo 1 > ""{app}\first_run"""; Flags: runhidden skipifsilent
 ; Launch MediaSnag
