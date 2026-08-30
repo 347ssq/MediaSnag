@@ -52,15 +52,50 @@ jobs:
         run: |
           choco install innosetup -y --no-progress
 
-      - name: Build installer
-        shell: bash
+      - name: Download Chinese language file
+        shell: pwsh
         run: |
-          mkdir -p video-downloader/build/staging
-          cp -r staging/python video-downloader/build/staging/python
-          cp -r staging/bin video-downloader/build/staging/bin
-          cp -r staging/app video-downloader/build/staging/app
-          cp staging/userscript.user.js video-downloader/build/staging/userscript.user.js
-          "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" video-downloader/build/mediasnag.iss
+          $isccDir = Split-Path (Get-Command iscc -ErrorAction SilentlyContinue).Source -ErrorAction SilentlyContinue
+          if (-not $isccDir) {
+            $isccDir = "${env:ProgramFiles(x86)}\Inno Setup 6"
+            if (-not (Test-Path "$isccDir\ISCC.exe")) {
+              $isccDir = "$env:ProgramFiles\Inno Setup 6"
+            }
+          }
+          $langDir = Join-Path $isccDir "Languages"
+          if (-not (Test-Path "$langDir\ChineseSimplified.isl")) {
+            Invoke-WebRequest -Uri "https://raw.githubusercontent.com/jrsoftware/issrc/main/Files/Languages/Unofficial/ChineseSimplified.isl" -OutFile "$langDir\ChineseSimplified.isl"
+          }
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          # Copy staging files
+          New-Item -ItemType Directory -Force -Path "video-downloader/build/staging" | Out-Null
+          Copy-Item -Recurse -Force "staging/python" "video-downloader/build/staging/python"
+          Copy-Item -Recurse -Force "staging/bin" "video-downloader/build/staging/bin"
+          Copy-Item -Recurse -Force "staging/app" "video-downloader/build/staging/app"
+          Copy-Item -Force "staging/userscript.user.js" "video-downloader/build/staging/userscript.user.js"
+          
+          # Create output directory
+          New-Item -ItemType Directory -Force -Path "video-downloader/build/installer/windows/output" | Out-Null
+          
+          # Find ISCC.exe
+          $isccPaths = @(
+            "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+            "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
+            "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe"
+          )
+          $iscc = $isccPaths | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $iscc) {
+            Write-Error "ISCC.exe not found"
+            exit 1
+          }
+          Write-Host "Using ISCC: $iscc"
+          
+          # Build
+          & $iscc "video-downloader/build/mediasnag.iss"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Upload installer
         uses: actions/upload-artifact@v4
