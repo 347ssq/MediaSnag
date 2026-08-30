@@ -46,7 +46,7 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\python\pythonw.exe"; Parame
 
 [Run]
 ; Install Tampermonkey from Edge Add-ons store (works in China)
-Filename: "https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepnlendamhhebd"; Description: "安装 Tampermonkey"; Flags: shellexec skipifsilent unchecked
+Filename: "https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepeloendndfphd"; Description: "安装 Tampermonkey"; Flags: shellexec skipifsilent unchecked
 ; Create first-run marker so app opens userscript install page
 Filename: "cmd.exe"; Parameters: "/c echo 1 > ""{app}\first_run"""; Flags: runhidden skipifsilent
 ; Launch MediaSnag
