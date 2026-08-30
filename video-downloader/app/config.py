@@ -69,13 +69,24 @@ def get_data_dir():
 
 
 def get_userscript_path():
-    """Return path to the bundled userscript."""
+    """Return path to the bundled userscript (first existing candidate)."""
     if get_platform() == "windows":
-        return get_install_dir() / "userscript.user.js"
-    return get_install_dir() / "app" / "templates" / "universal_downloader.user.js"
+        candidates = [
+            get_install_dir() / "userscript.user.js",
+            Path(__file__).parent / "templates" / "universal_downloader.user.js",
+        ]
+    else:
+        candidates = [
+            get_install_dir() / "app" / "templates" / "universal_downloader.user.js",
+            Path(__file__).parent / "templates" / "universal_downloader.user.js",
+        ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return candidates[0]
 
 
 SERVER_PORT = 19527
 SERVER_PORT_MAX = 19537
 
-APP_VERSION = "1.0.3"
+APP_VERSION = "1.0.4"
