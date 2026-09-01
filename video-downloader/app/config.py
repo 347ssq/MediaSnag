@@ -73,6 +73,7 @@ def get_userscript_path():
     if get_platform() == "windows":
         candidates = [
             get_install_dir() / "userscript.user.js",
+            get_install_dir() / "userscript.dat",
             Path(__file__).parent / "templates" / "universal_downloader.user.js",
         ]
     else:
@@ -89,4 +90,4 @@ def get_userscript_path():
 SERVER_PORT = 19527
 SERVER_PORT_MAX = 19537
 
-APP_VERSION = "1.0.4"
+APP_VERSION = "1.0.5"

@@ -2,7 +2,7 @@
 ; Compile with: ISCC.exe mediasnag.iss
 
 #define MyAppName "MediaSnag"
-#define MyAppVersion "1.0.4"
+#define MyAppVersion "1.0.5"
 #define MyAppPublisher "MediaSnag"
 #define MyAppExeName "MediaSnag.exe"
 
@@ -37,7 +37,9 @@ Source: "staging\python\*"; DestDir: "{app}\python"; Flags: ignoreversion recurs
 Source: "staging\bin\*"; DestDir: "{app}\bin"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; App source code
 Source: "staging\app\*"; DestDir: "{app}\app"; Flags: ignoreversion recursesubdirs createallsubdirs
-; Userscript
+; Userscript — installed twice: the .dat copy survives antivirus
+; software that may delete loose .js files from the install root.
+Source: "staging\userscript.user.js"; DestDir: "{app}"; DestName: "userscript.dat"; Flags: ignoreversion
 Source: "staging\userscript.user.js"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
