@@ -7,9 +7,12 @@ Handles invocation modes:
 3. Direct run:  mediasnag → platform-specific ready behavior
 """
 
+import json
 import os
 import platform
+import signal
 import sys
+import time
 import urllib.parse
 import webbrowser
 
@@ -40,7 +43,11 @@ def has_serve_flag():
 
 
 def find_running_server():
-    """Return the port of an already-running MediaSnag server, or None."""
+    """Return (port, health) for an already-running MediaSnag server.
+
+    health is the parsed /health JSON (includes version and pid), or
+    None when no server responded.
+    """
     import urllib.request
 
     for port in range(config.SERVER_PORT, config.SERVER_PORT_MAX + 1):
@@ -49,10 +56,14 @@ def find_running_server():
                 f"http://127.0.0.1:{port}/health", timeout=0.3
             ) as resp:
                 if resp.status == 200:
-                    return port
+                    try:
+                        health = json.loads(resp.read().decode("utf-8"))
+                    except Exception:
+                        health = {}
+                    return port, health
         except Exception:
             continue
-    return None
+    return None, None
 
 
 def start_server_and_open_browser(url=None, dl_type=None):
@@ -65,7 +76,24 @@ def start_server_and_open_browser(url=None, dl_type=None):
     from .server import start_server
 
     server = None
-    existing_port = find_running_server()
+    existing_port, health = find_running_server()
+    if existing_port and health.get("version") != config.APP_VERSION:
+        # A stale server from an older install is holding the port;
+        # stop it so the new code takes over instead of being reused.
+        stale_pid = health.get("pid")
+        print(
+            f"Stopping stale server v{health.get('version')} (pid {stale_pid}) "
+            f"on port {existing_port}",
+            file=sys.stderr,
+        )
+        if stale_pid:
+            try:
+                os.kill(int(stale_pid), signal.SIGTERM)
+                time.sleep(1)
+            except Exception as e:
+                print(f"Failed to stop stale server: {e}", file=sys.stderr)
+        existing_port = None
+
     if existing_port:
         port = existing_port
     else:
@@ -73,6 +101,12 @@ def start_server_and_open_browser(url=None, dl_type=None):
         userscript_path = config.get_userscript_path()
 
         server, port = start_server(static_dir, userscript_path)
+
+        print(
+            "Startup diagnostics: "
+            + json.dumps(config.get_diagnostics(), ensure_ascii=False),
+            file=sys.stderr,
+        )
 
         # Record PID so the installer can terminate this instance
         # before replacing files on upgrade.

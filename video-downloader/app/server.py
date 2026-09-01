@@ -87,7 +87,9 @@ class DownloadHandler(SimpleHTTPRequestHandler):
         elif path == "/userscript.user.js":
             self._serve_userscript()
         elif path == "/health":
-            self._send_json({"status": "ok", "version": config.APP_VERSION})
+            health = {"status": "ok", "pid": os.getpid()}
+            health.update(config.get_diagnostics())
+            self._send_json(health)
         else:
             self._send_404()
 

@@ -90,4 +90,56 @@ def get_userscript_path():
 SERVER_PORT = 19527
 SERVER_PORT_MAX = 19537
 
-APP_VERSION = "1.0.7"
+APP_VERSION = "1.0.8"
+
+
+_YT_DLP_VERSION_CACHE = None
+
+
+def _get_yt_dlp_version():
+    global _YT_DLP_VERSION_CACHE
+    if _YT_DLP_VERSION_CACHE is None:
+        try:
+            import yt_dlp
+            _YT_DLP_VERSION_CACHE = yt_dlp.version.__version__
+        except Exception as e:
+            _YT_DLP_VERSION_CACHE = f"import failed: {e}"
+    return _YT_DLP_VERSION_CACHE
+
+
+def get_diagnostics():
+    """Snapshot of critical files, for /health and the startup log.
+
+    Antivirus software on user machines has been observed deleting
+    bin/ and loose userscript files after install, so every diagnosis
+    starts by confirming what is actually on disk right now.
+    """
+    install_dir = get_install_dir()
+    bin_dir = install_dir / "bin"
+    ffmpeg = get_ffmpeg_path()
+    ffprobe = get_ffprobe_path()
+    userscript = get_userscript_path()
+    data_dir = get_data_dir()
+
+    def listing(directory):
+        try:
+            return sorted(os.listdir(directory))
+        except OSError:
+            return None
+
+    return {
+        "version": APP_VERSION,
+        "platform": get_platform(),
+        "install_dir": {
+            "path": str(install_dir),
+            "exists": install_dir.exists(),
+            "contents": listing(install_dir),
+        },
+        "bin_dir": {"exists": bin_dir.exists(), "contents": listing(bin_dir)},
+        "ffmpeg": {"path": str(ffmpeg), "exists": ffmpeg.exists()},
+        "ffprobe": {"exists": ffprobe.exists()},
+        "yt_dlp": _get_yt_dlp_version(),
+        "userscript": {"path": str(userscript), "exists": userscript.exists()},
+        "data_dir": {"exists": data_dir.exists()},
+        "download_dir": str(get_download_dir()),
+    }
