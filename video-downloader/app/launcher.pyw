@@ -16,10 +16,21 @@ install_root = os.path.dirname(app_dir)
 
 # pythonw.exe has no console: sys.stdout/stderr are None, and any print()
 # would crash the app and kill the download server right after startup.
+# Redirect both to error.log so runtime/download errors are diagnosable.
+_log_path = os.path.join(install_root, "error.log")
+try:
+    _log_file = open(_log_path, "a", encoding="utf-8")
+    _log_file.write(
+        f"\n===== MediaSnag launched at {__import__('datetime').datetime.now()} =====\n"
+    )
+    _log_file.flush()
+except Exception:
+    _log_file = None
+
 if sys.stdout is None:
-    sys.stdout = open(os.devnull, "w", encoding="utf-8")
+    sys.stdout = _log_file if _log_file else open(os.devnull, "w", encoding="utf-8")
 if sys.stderr is None:
-    sys.stderr = open(os.devnull, "w", encoding="utf-8")
+    sys.stderr = _log_file if _log_file else open(os.devnull, "w", encoding="utf-8")
 
 # Named mutex so the installer can detect running instances and close
 # them before replacing files (AppMutex=MediaSnagAppMutex in mediasnag.iss).

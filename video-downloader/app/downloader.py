@@ -260,6 +260,17 @@ class DownloadTask:
         self._thread.start()
 
     def _run_impl(self):
+        try:
+            self._run_download()
+        except Exception as e:
+            print(f"Download thread crashed: {e}", file=sys.stderr)
+            import traceback
+            traceback.print_exc(file=sys.stderr)
+            self.status = "error"
+            self.error = f"内部错误: {e}"
+            self._notify()
+
+    def _run_download(self):
         yt_dlp = _get_yt_dlp()
 
         download_dir = str(config.get_download_dir())
@@ -289,15 +300,21 @@ class DownloadTask:
         last_error = None
         for attempt in range(2):
             if attempt > 0:
+                print(f"412 retry: waiting {RETRY_DELAY_412}s before attempt 2", file=sys.stderr)
                 time.sleep(RETRY_DELAY_412)
             for cookies in _cookie_sources():
                 attempt_opts = dict(opts)
                 if cookies:
                     attempt_opts["cookiesfrombrowser"] = cookies
                 _apply_session_cookies(attempt_opts)
-                ydl = yt_dlp.YoutubeDL(attempt_opts)
+                print(f"Download attempt {attempt + 1} (cookies={cookies}): {self.url}", file=sys.stderr)
                 try:
-                    ydl.download([self.url])
+                    ydl = yt_dlp.YoutubeDL(attempt_opts)
+                    try:
+                        ydl.download([self.url])
+                    finally:
+                        _save_session_cookies(ydl)
+                        ydl.close()
                     self.status = "completed"
                     self.progress = 100
                     self._notify()
@@ -305,9 +322,6 @@ class DownloadTask:
                 except Exception as e:
                     last_error = e
                     print(f"Download failed (cookies={cookies}): {e}", file=sys.stderr)
-                finally:
-                    _save_session_cookies(ydl)
-                    ydl.close()
                 # Mid-transfer failure: retrying would just re-download,
                 # so surface the error instead.
                 if self.progress > 0:

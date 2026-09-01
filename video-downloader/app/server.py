@@ -161,8 +161,13 @@ class DownloadHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
         last_progress = -1
+        last_send = 0.0
         while True:
-            if task.progress != last_progress or task.status in ("completed", "error"):
+            now = time.time()
+            changed = task.progress != last_progress or task.status in ("completed", "error")
+            # Heartbeat every 5s even without progress, so the UI can show
+            # elapsed time during cookie extraction / 412 retry waits.
+            if changed or now - last_send >= 5:
                 data = {
                     "progress": task.progress,
                     "speed": task.speed,
@@ -175,6 +180,7 @@ class DownloadHandler(SimpleHTTPRequestHandler):
                 self.wfile.write(msg.encode("utf-8"))
                 self.wfile.flush()
                 last_progress = task.progress
+                last_send = now
 
                 if task.status in ("completed", "error"):
                     break

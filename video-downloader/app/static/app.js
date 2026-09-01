@@ -142,6 +142,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const data = await resp.json();
 
             if (data.task_id) {
+                downloadBtn.textContent = "下载中...";
                 trackProgress(data.task_id);
             } else {
                 throw new Error(data.error || "Unknown error");
@@ -156,9 +157,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function trackProgress(taskId) {
         const evtSource = new EventSource(`/api/progress?id=${taskId}`);
+        const startedAt = Date.now();
+        let lastEventAt = Date.now();
+        let finished = false;
 
         evtSource.onmessage = (event) => {
             const data = JSON.parse(event.data);
+            lastEventAt = Date.now();
 
             progressFilename.textContent = data.filename || "准备中...";
             progressPercent.textContent = `${Math.round(data.progress)}%`;
@@ -180,6 +185,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (data.status === "completed") {
+                finished = true;
                 evtSource.close();
                 progressStatus.textContent = "下载完成!";
                 progressStatus.className = "progress-status success";
@@ -187,6 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 downloadBtn.textContent = "开始下载";
                 addToHistory(currentUrl, selectedQuality, "completed");
             } else if (data.status === "error") {
+                finished = true;
                 evtSource.close();
                 progressStatus.textContent = "下载失败: " + (data.error || "Unknown error");
                 progressStatus.className = "progress-status error";
@@ -196,10 +203,23 @@ document.addEventListener("DOMContentLoaded", () => {
             } else if (data.status === "processing") {
                 progressStatus.textContent = "正在合并/转码...";
                 progressStatus.className = "progress-status";
+            } else if (data.status === "downloading" && !data.progress) {
+                const waited = Math.round((Date.now() - startedAt) / 1000);
+                progressStatus.textContent = `正在连接视频服务器（已等待 ${waited} 秒）...`;
+                progressStatus.className = "progress-status";
             }
         };
 
+        setInterval(() => {
+            if (finished) return;
+            if (Date.now() - lastEventAt > 60000) {
+                progressStatus.textContent = "长时间无响应，可能已被网站限流。可查看 %LOCALAPPDATA%\\MediaSnag\\error.log";
+                progressStatus.className = "progress-status error";
+            }
+        }, 10000);
+
         evtSource.onerror = () => {
+            if (finished) return;
             evtSource.close();
             progressStatus.textContent = "连接中断";
             progressStatus.className = "progress-status error";
