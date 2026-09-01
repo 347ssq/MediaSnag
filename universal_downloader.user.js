@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         通用视频/音频下载器
 // @namespace    http://tampermonkey.net/
-// @version      3.8
+// @version      3.9
 // @description  在视频页面显示下载按钮，支持视频、音频和音效素材下载；其它网站提供通用媒体扫描、页面对照、预览和下载
 // @author       Qoder
 // @match        *://*/*
@@ -394,6 +394,7 @@
         document.querySelectorAll('.media-dl-bili').forEach(el => el.remove());
 
         const toolbar = document.querySelector('.video-toolbar-left-main')
+            || document.querySelector('.video-toolbar-left')
             || document.querySelector('.toolbar-left')
             || document.querySelector('.video-info-operate');
 
@@ -883,12 +884,19 @@
     const isBili = host.includes('bilibili.com');
 
     function tryInsert() {
-        if (isYT) return insertYouTube();
-        if (isBili) return insertBilibili();
-        if (isSoundDino) return insertSoundDino();
-        if (isGenericSite) return insertGeneric();
-        insertFallback();
-        return true;
+        let ok;
+        if (isYT) ok = insertYouTube();
+        else if (isBili) ok = insertBilibili();
+        else if (isSoundDino) ok = insertSoundDino();
+        else if (isGenericSite) ok = insertGeneric();
+        else { insertFallback(); ok = true; }
+        // Site-specific anchor never appeared (layout change / slow page):
+        // always give the user a visible universal button as a last resort.
+        if (!ok && attempts >= 10) {
+            insertFallback();
+            ok = true;
+        }
+        return ok;
     }
 
     // Initial insertion with retries (page may still be rendering)
@@ -896,7 +904,7 @@
     function attemptInsert() {
         if (tryInsert()) return;
         attempts++;
-        if (attempts < 30) {
+        if (attempts <= 10) {
             setTimeout(attemptInsert, 500);
         }
     }
@@ -924,11 +932,17 @@
             if (document.querySelector('li.playtrack[data-track]:not([data-dl-added])')) insertSoundDino();
             return;
         }
-        const selector = isYT ? '.media-dl-yt'
+        const siteSelector = isYT ? '.media-dl-yt'
             : (isBili ? '.media-dl-bili'
             : (isGenericSite ? '.media-dl-generic' : '.media-dl-fallback'));
-        if (!document.querySelector(selector)) {
+        const hasSiteBtn = !!document.querySelector(siteSelector);
+        const hasFallback = !!document.querySelector('.media-dl-fallback');
+        if (!hasSiteBtn && !hasFallback) {
             tryInsert();
+        } else if (hasSiteBtn && hasFallback && !isGenericSite) {
+            // Site-specific button took over: drop the temporary fallback
+            document.querySelectorAll('.media-dl-fallback:not(.media-dl-generic)')
+                .forEach(el => el.remove());
         }
     }, 2000);
 

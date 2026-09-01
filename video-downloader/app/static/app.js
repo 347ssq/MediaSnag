@@ -57,8 +57,13 @@ document.addEventListener("DOMContentLoaded", () => {
         analyzeBtn.textContent = "分析中...";
 
         try {
-            const infoResp = await fetch(`/api/info?url=${encodeURIComponent(url)}`);
-            const info = await infoResp.json();
+            const resp = await fetch(`/api/analyze?url=${encodeURIComponent(url)}`);
+            const info = await resp.json();
+
+            if (info.error && !info.title) {
+                alert("分析失败: " + info.error);
+                return false;
+            }
 
             if (info.title) {
                 videoTitle.textContent = info.title;
@@ -75,12 +80,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 videoInfoSection.classList.remove("hidden");
             }
 
-            const formatsResp = await fetch(`/api/formats?url=${encodeURIComponent(url)}`);
-            const formats = await formatsResp.json();
-
             if (currentDlType === "video") {
                 qualityList.replaceChildren();
-                formats.qualities.forEach((q, i) => {
+                (info.qualities || []).forEach((q, i) => {
                     const div = document.createElement("div");
                     div.className = "quality-option" + (i === 0 ? " selected" : "");
                     div.textContent = q;
@@ -102,8 +104,10 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             qualitySection.classList.remove("hidden");
+            return true;
         } catch (err) {
             alert("分析失败: " + err.message);
+            return false;
         } finally {
             analyzeBtn.disabled = false;
             analyzeBtn.textContent = "分析";
@@ -253,5 +257,29 @@ document.addEventListener("DOMContentLoaded", () => {
             div.appendChild(info);
             historyList.appendChild(div);
         });
+    }
+
+    // ===== Auto-start when opened from a ytdl:// / ytdla:// link (?url=...&type=...) =====
+    const params = new URLSearchParams(window.location.search);
+    const autoUrl = params.get("url");
+    const autoType = params.get("type");
+
+    if (autoType === "audio" || autoType === "video") {
+        currentDlType = autoType;
+        document.querySelectorAll(".toggle-option").forEach(o => {
+            const isMatch = o.dataset.type === autoType;
+            o.classList.toggle("active", isMatch);
+            const radio = o.querySelector("input");
+            if (radio) radio.checked = isMatch;
+        });
+    }
+
+    if (autoUrl) {
+        urlInput.value = autoUrl;
+        currentUrl = autoUrl;
+        (async () => {
+            const ok = await analyzeUrl(autoUrl);
+            if (ok) downloadBtn.click();
+        })();
     }
 });

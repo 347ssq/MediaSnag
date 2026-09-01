@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediaSnag - 首次设置</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .step-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 1rem;
+        }
+        .step-num {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        .step-body h3 {
+            font-size: 1.05rem;
+            margin-bottom: 0.4rem;
+        }
+        .step-body p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+        .step-body .btn {
+            display: inline-block;
+            text-decoration: none;
+            font-size: 0.9rem;
+            padding: 0.6rem 1.2rem;
+        }
+        .kbd {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-family: monospace;
+            font-size: 0.85em;
+            color: var(--text-primary);
+        }
+        .warn {
+            border-left: 3px solid var(--accent);
+            padding-left: 0.75rem;
+            margin: 0.5rem 0;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>MediaSnag 首次设置</h1>
+            <p class="subtitle">只需三步，视频页面就会出现下载按钮</p>
+        </header>
+
+        <main>
+            <div class="step-card">
+                <div class="step-num">1</div>
+                <div class="step-body">
+                    <h3>安装 Tampermonkey（油猴）扩展</h3>
+                    <p>如果浏览器已经装了 Tampermonkey，直接跳到第 2 步。</p>
+                    <a class="btn btn-primary" target="_blank"
+                       href="https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepeloendndfphd">
+                        去 Edge 扩展商店安装
+                    </a>
+                </div>
+            </div>
+
+            <div class="step-card">
+                <div class="step-num">2</div>
+                <div class="step-body">
+                    <h3>开启「允许用户脚本」权限（关键步骤）</h3>
+                    <p>Edge 默认禁止脚本运行，必须手动打开这个开关，否则任何页面都不会出现下载按钮：</p>
+                    <div class="warn">
+                        地址栏输入 <span class="kbd">edge://extensions/</span> 回车 →
+                        找到 <b>Tampermonkey</b> → 点「<b>详细信息</b>」→
+                        打开「<b>允许用户脚本</b>」开关。<br>
+                        如果页面左下角有「<b>开发人员模式</b>」开关，也一并打开。
+                    </div>
+                    <p>提示：如果 Tampermonkey 图标弹出窗口顶部有蓝色提示文字，直接点它也能跳到这个设置。</p>
+                </div>
+            </div>
+
+            <div class="step-card">
+                <div class="step-num">3</div>
+                <div class="step-body">
+                    <h3>安装 MediaSnag 下载脚本</h3>
+                    <p>点击后 Tampermonkey 会弹出安装确认页，点「安装」即可（之前装过则显示「更新」）。</p>
+                    <a class="btn btn-download" style="margin-top:0" href="/userscript.user.js">
+                        安装下载脚本
+                    </a>
+                </div>
+            </div>
+
+            <div class="step-card" style="background:transparent;border:1px dashed var(--border);">
+                <div class="step-body" style="flex:1;text-align:center;">
+                    <h3>完成 ✅</h3>
+                    <p>打开任意 B 站 / YouTube 视频页，工具栏或页面右下角会出现「下载视频 / 下载音频」按钮，点击即可下载。</p>
+                    <a class="btn btn-primary" href="/">进入 MediaSnag 主界面</a>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>MediaSnag 设置向导 | <a href="/">返回主界面</a></p>
+        </footer>
+    </div>
+</body>
+</html>

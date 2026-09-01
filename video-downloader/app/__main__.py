@@ -55,7 +55,7 @@ def find_running_server():
     return None
 
 
-def start_server_and_open_browser(url=None):
+def start_server_and_open_browser(url=None, dl_type=None):
     """Start the HTTP server and open the browser.
 
     If a MediaSnag server is already running, reuse it instead of
@@ -86,6 +86,8 @@ def start_server_and_open_browser(url=None):
 
     if url:
         page = f"http://127.0.0.1:{port}/?url={urllib.parse.quote(url, safe='')}"
+        if dl_type:
+            page += f"&type={urllib.parse.quote(dl_type, safe='')}"
     else:
         page = f"http://127.0.0.1:{port}/"
 
@@ -97,7 +99,7 @@ def start_server_and_open_browser(url=None):
     if os.path.exists(first_run_marker):
         import time
         time.sleep(1)
-        webbrowser.open(f"http://127.0.0.1:{port}/userscript.user.js")
+        webbrowser.open(f"http://127.0.0.1:{port}/setup.html")
         try:
             os.remove(first_run_marker)
         except OSError:
@@ -124,7 +126,7 @@ def main():
     system = platform.system()
 
     if has_serve_flag() or system == "Windows":
-        start_server_and_open_browser(url)
+        start_server_and_open_browser(url, dl_type)
         return
 
     if url and system == "Darwin":

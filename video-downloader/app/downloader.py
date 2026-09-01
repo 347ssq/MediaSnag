@@ -4,9 +4,12 @@ import json
 import os
 import sys
 import threading
+import time
 from pathlib import Path
 
 from . import config
+
+RETRY_DELAY_412 = 5
 
 
 def _get_yt_dlp():
@@ -31,32 +34,87 @@ QUALITY_MAP = {
 }
 
 
-def get_available_qualities(url):
-    """Detect available video qualities for a URL.
+def _cookie_sources():
+    """Browser cookie sources to try, in order.
 
-    Returns list of quality strings like ["1080p", "720p", "480p", "360p"].
+    A real logged-in session (cookies) greatly reduces 412 risk-control
+    blocks on sites like Bilibili, and unlocks higher qualities.
+    """
+    if config.get_platform() == "windows":
+        return [("edge",), None]
+    return [None]
+
+
+def _get_cookie_file():
+    data_dir = config.get_data_dir()
+    data_dir.mkdir(parents=True, exist_ok=True)
+    return data_dir / "session_cookies.txt"
+
+
+def _apply_session_cookies(opts):
+    cookie_file = _get_cookie_file()
+    if cookie_file.exists():
+        opts["cookiefile"] = str(cookie_file)
+
+
+def _save_session_cookies(ydl):
+    # Persist the session (e.g. Bilibili buvid3) so follow-up requests
+    # look like the same browser instead of a fresh anonymous client,
+    # which is what triggers 412 risk-control blocks.
+    try:
+        jar = getattr(ydl, "cookiejar", None)
+        if jar is not None and len(jar) > 0:
+            jar.save(str(_get_cookie_file()), ignore_discard=True, ignore_expires=True)
+    except Exception as e:
+        print(f"Cookie save failed: {e}", file=sys.stderr)
+
+
+def _is_412(error):
+    return "412" in str(error)
+
+
+def _extract_info(url):
+    """Run a single yt-dlp extraction, trying cookie sources in order.
+
+    Returns (info_dict, error). Retries once after a short wait when
+    Bilibili-style 412 risk control kicks in.
     """
     yt_dlp = _get_yt_dlp()
 
-    opts = {
+    base_opts = {
         "quiet": True,
         "no_warnings": True,
         "skip_download": True,
         "noplaylist": True,
     }
 
-    try:
-        with yt_dlp.YoutubeDL(opts) as ydl:
-            info = ydl.extract_info(url, download=False)
-    except Exception as e:
-        print(f"Error extracting info: {e}", file=sys.stderr)
-        return ["360p", "720p", "1080p"]
+    last_error = None
+    for attempt in range(2):
+        if attempt > 0:
+            time.sleep(RETRY_DELAY_412)
+        for cookies in _cookie_sources():
+            opts = dict(base_opts)
+            if cookies:
+                opts["cookiesfrombrowser"] = cookies
+            _apply_session_cookies(opts)
+            ydl = yt_dlp.YoutubeDL(opts)
+            try:
+                info = ydl.extract_info(url, download=False)
+                return info, None
+            except Exception as e:
+                last_error = e
+                print(f"Extraction failed (cookies={cookies}): {e}", file=sys.stderr)
+            finally:
+                _save_session_cookies(ydl)
+                ydl.close()
+        if last_error is None or not _is_412(last_error):
+            break
+    return None, last_error
 
-    if not info or "formats" not in info:
-        return ["360p", "720p", "1080p"]
 
+def _qualities_from_info(info):
     heights = set()
-    for fmt in info["formats"]:
+    for fmt in info.get("formats", []):
         h = fmt.get("height")
         if h and h > 0:
             heights.add(h)
@@ -74,27 +132,30 @@ def get_available_qualities(url):
     return [q for q in quality_order if q in available]
 
 
-def get_video_info(url):
-    """Get video title and thumbnail URL."""
-    yt_dlp = _get_yt_dlp()
+def analyze_video(url):
+    """One-pass analysis: title, thumbnail, duration and qualities.
 
-    opts = {
-        "quiet": True,
-        "no_warnings": True,
-        "skip_download": True,
-        "noplaylist": True,
+    Merges what used to be two separate extractions — consecutive
+    requests trip Bilibili's 412 risk control.
+    """
+    info, error = _extract_info(url)
+
+    if not info:
+        return {
+            "title": None,
+            "thumbnail": None,
+            "duration": None,
+            "qualities": ["360p", "720p", "1080p"],
+            "error": str(error) if error else "Unknown error",
+        }
+
+    return {
+        "title": info.get("title"),
+        "thumbnail": info.get("thumbnail"),
+        "duration": info.get("duration"),
+        "qualities": _qualities_from_info(info),
+        "error": None,
     }
-
-    try:
-        with yt_dlp.YoutubeDL(opts) as ydl:
-            info = ydl.extract_info(url, download=False)
-            return {
-                "title": info.get("title", "Unknown"),
-                "thumbnail": info.get("thumbnail"),
-                "duration": info.get("duration"),
-            }
-    except Exception:
-        return {"title": "Unknown", "thumbnail": None, "duration": None}
 
 
 def build_format_selector(quality, dl_type="video"):
@@ -225,14 +286,40 @@ class DownloadTask:
         self.status = "downloading"
         self._notify()
 
-        try:
-            with yt_dlp.YoutubeDL(opts) as ydl:
-                ydl.download([self.url])
-            self.status = "completed"
-            self.progress = 100
-        except Exception as e:
-            self.status = "error"
-            self.error = str(e)
+        last_error = None
+        for attempt in range(2):
+            if attempt > 0:
+                time.sleep(RETRY_DELAY_412)
+            for cookies in _cookie_sources():
+                attempt_opts = dict(opts)
+                if cookies:
+                    attempt_opts["cookiesfrombrowser"] = cookies
+                _apply_session_cookies(attempt_opts)
+                ydl = yt_dlp.YoutubeDL(attempt_opts)
+                try:
+                    ydl.download([self.url])
+                    self.status = "completed"
+                    self.progress = 100
+                    self._notify()
+                    return
+                except Exception as e:
+                    last_error = e
+                    print(f"Download failed (cookies={cookies}): {e}", file=sys.stderr)
+                finally:
+                    _save_session_cookies(ydl)
+                    ydl.close()
+                # Mid-transfer failure: retrying would just re-download,
+                # so surface the error instead.
+                if self.progress > 0:
+                    self.status = "error"
+                    self.error = str(last_error)
+                    self._notify()
+                    return
+            if last_error is None or not _is_412(last_error):
+                break
+
+        self.status = "error"
+        self.error = str(last_error) if last_error else "Unknown error"
 
         self._notify()
 

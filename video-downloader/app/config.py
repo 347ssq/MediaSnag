@@ -90,4 +90,4 @@ def get_userscript_path():
 SERVER_PORT = 19527
 SERVER_PORT_MAX = 19537
 
-APP_VERSION = "1.0.5"
+APP_VERSION = "1.0.6"

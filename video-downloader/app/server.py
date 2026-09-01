@@ -54,6 +54,7 @@ class DownloadHandler(SimpleHTTPRequestHandler):
             "",
             "可用地址:",
             "  /                    主界面",
+            "  /setup.html          首次设置向导",
             "  /userscript.user.js  油猴脚本（安装/更新）",
             "  /health              状态检查（含版本号）",
         ]
@@ -71,14 +72,14 @@ class DownloadHandler(SimpleHTTPRequestHandler):
 
         if path == "/" or path == "/index.html":
             self._serve_static("index.html", "text/html; charset=utf-8")
+        elif path == "/setup.html":
+            self._serve_static("setup.html", "text/html; charset=utf-8")
         elif path == "/style.css":
             self._serve_static("style.css", "text/css; charset=utf-8")
         elif path == "/app.js":
             self._serve_static("app.js", "application/javascript; charset=utf-8")
-        elif path == "/api/formats":
-            self._handle_formats(params)
-        elif path == "/api/info":
-            self._handle_info(params)
+        elif path == "/api/analyze":
+            self._handle_analyze(params)
         elif path == "/api/progress":
             self._handle_progress(params)
         elif path == "/api/tasks":
@@ -118,25 +119,14 @@ class DownloadHandler(SimpleHTTPRequestHandler):
         else:
             self._send_404(detail=f"脚本文件未找到: {self.userscript_path}")
 
-    def _handle_formats(self, params):
+    def _handle_analyze(self, params):
         url = params.get("url", [None])[0]
         if not url:
             self._send_json({"error": "Missing url parameter"}, 400)
             return
 
-        from .downloader import get_available_qualities
-        qualities = get_available_qualities(url)
-        self._send_json({"qualities": qualities})
-
-    def _handle_info(self, params):
-        url = params.get("url", [None])[0]
-        if not url:
-            self._send_json({"error": "Missing url parameter"}, 400)
-            return
-
-        from .downloader import get_video_info
-        info = get_video_info(url)
-        self._send_json(info)
+        from .downloader import analyze_video
+        self._send_json(analyze_video(url))
 
     def _handle_download(self, data):
         url = data.get("url")

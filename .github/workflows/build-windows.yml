@@ -25,6 +25,12 @@ jobs:
           rmdir staging/python_temp
           rm python.tar.gz
 
+      - name: Install yt-dlp module into bundled Python
+        shell: bash
+        run: |
+          staging/python/python.exe -m pip install --no-warn-script-location "yt-dlp[default]"
+          staging/python/python.exe -c "import yt_dlp; print('yt_dlp', yt_dlp.version.__version__)"
+
       - name: Download yt-dlp
         shell: bash
         run: |
